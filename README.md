@@ -5,7 +5,7 @@ portion for [the plow](https://github.com/RobbyChapman/plow-bot). The platform f
 1 daughter board for the right platform buttons, and one for the MLX90333 hall effect sensor. In my case, I only want 
 the stick and hall effect sensor.
 
-![Alt text](./assets/joy1.JPG?raw=true "Packet Format")
+![Alt text](./assets/joy1.JPG?raw=true "Original Joystick")
 
 To get started, I dissembled the joystick and started tracing back from the 20 pin breakout on the main MCU. This 
 breakout predominately consist of toggle switches and hat switches, which reside on the stick itself. These are important
@@ -21,7 +21,7 @@ plow, or toggling remote switches for lights etc. Below is the resulting map of 
     Gray:       Top D-pad right
     White:      Top D-pad up
 
-![Alt text](./assets/joy2.JPG?raw=true "Packet Format")
+![Alt text](./assets/joy2.JPG?raw=true "GPIO Breakout")
 
 The next step was to find which pins communicate with the MLX90333. For this task, I had to break out the scope and 
 logic analyzer. The datasheet clearly defines the pinout, so it was mainly just a matter of tracing the wires from the
@@ -34,7 +34,7 @@ resulting map for it's SPI bus looks like this(From left to right):
     Brown:      GND
     Black:      VDD
 
-![Alt text](./assets/joy3.JPG?raw=true "Packet Format")
+![Alt text](./assets/joy3.JPG?raw=true "SPI Breakout")
 
 The final step in isolating the joystick from the platform was to swap out the main MCU for my MSP430. This is where the
 bulk of the work is. 
@@ -53,16 +53,16 @@ a baseline conversation with the logic analyzer. Analysis of the resulting captu
 the clock. For this joystick, the clock is active hi, idle low, with captures on even clock changes for sampling the 
 trailing edge of each phase. The is represented by the timing diagram below:
 
-![Alt text](./assets/mlx90333_timing2.JPG?raw=true "Packet Format")
+![Alt text](./assets/mlx90333_timing2.JPG?raw=true "Timing flow")
 
 Where:
 </br></br>
-![Alt text](./assets/mlx90333_timing.JPG?raw=true "Packet Format")
+![Alt text](./assets/mlx90333_timing.JPG?raw=true "Timing definitions")
 
 This chip is interesting in the sense that it leverages a single pin for MISO/MOSI data transfer, ultimately 
 making this a half duplex device as seen below: 
 
-![Alt text](./assets/mlx90333_frame.JPG?raw=true "Packet Format")
+![Alt text](./assets/mlx90333_frame.JPG?raw=true "Packet Frame")
 
 This poses a few challenges for the MSP430. Basically you have to ensure whatever bytes you're shifting out, do not 
 overwrite the bytes that are being shifted in, as they are share the same pin, synchronizes by the same clock. I started
@@ -71,7 +71,7 @@ controlling the flow of data, without eating up clock cycles toggling modes. Aft
 this in hardware, by adding diodes for MISO/MOSI. This way, data can come in from MISO without corrupting data going out
 on MOSI and vise versa. The resulting frame generation on the MSP430 now looks like this:
 
-![Alt text](./assets/msp430_capture.JPG?raw=true "Packet Format")
+![Alt text](./assets/msp430_capture.JPG?raw=true "MSP430 Capture")
 
 
 ### **Packet Format**
