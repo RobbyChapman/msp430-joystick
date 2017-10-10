@@ -80,3 +80,68 @@ The contract for each frame takes the following format:
 ![Alt text](./assets/mlx90333_packet.JPG?raw=true "Packet Format")
 
 Where the LSB is the CRC of the 6 byte X-Y-Z sum.
+
+
+### **MSP430FR5994 Peripheral registers**
+
+The MSP430 peripheral registers are multiplexed with other module functions. Each port leverages two bits used to select
+the individual pins function. These two bits map to the following configuration options:
+
+| PxSEL1    | PxSEL0    | IO Function               |
+| :--------:|:---------:| :------------------------:|
+| 0         | 0         | General Purpose IO        |
+| 0         | 1         | Primary Module function   |
+| 1         | 0         | Secondary Module Function |
+| 1         | 1         | Tertiary Module Function  |
+
+
+I created a small chart, given the 2 bit configuration above, based on the MSP430FR5994 datsheet:
+
+    Port	Pin		Function		Port Select Register(1:0)
+    
+    1		5		UCA0CLK 			P1.1:1 P1.0:0
+    1		6		UCB0MOSI			P1.1:1 P1.0:0
+    1		7		UCB0MISO			P1.1:1 P1.0:0
+    
+    2		0		UCA0MOSI/UCA0TX		P1.1:1 P1.0:0
+    2		1		UCA0MISO/UCA0RX		P1.1:1 P1.0:0
+    2		2		UCB0CLK				P1.1:1 P1.0:0
+    
+    2		5		UCA1MOSI/UCA1TX		P1.1:1 P1.0:0
+    2		6		UCA1MISO/UCA1RX		P1.1:1 P1.0:0
+    2		4		UCA1CLK				P1.1:1 P1.0:0
+    
+    5		0		UCB1MOSI			P1.1:0 P1.0:1
+    5		1		UCB1MISO			P1.1:0 P1.0:1
+    5		2		UCB1CLK				P1.1:0 P1.0:1
+    
+    5		4		UCA2MOSI/UCA2TXD	P1.1:0 P1.0:1
+    5		5		UCA2MISO/UCA2RXD	P1.1:0 P1.0:1
+    5		6		UCA2CLK				P1.1:0 P1.0:1
+    
+    6		0		UCA3MOSI/UCA3TXD	P1.1:0 P1.0:1
+    6		1		UCA3MISO/UCA3RXD	P1.1:0 P1.0:1
+    6		2		UCA3CLK				P1.1:0 P1.0:1
+    
+    6		4		UCB3MOSI			P1.1:0 P1.0:1
+    6		5		UCB3MISO			P1.1:0 P1.0:1
+    6		6		UCB3CLK				P1.1:0 P1.0:1
+    
+    7		0		UCB2MOSI			P1.1:0 P1.0:1
+    7		1		UCB2MISO			P1.1:0 P1.0:1
+    7		2		UCB2CLK				P1.1:0 P1.0:1
+
+
+We use this port mapping to determine which peripherals to enable. In this case, we primarily require SPI and UART. The 
+following configuration is used for this project:
+
+    JoyStick:
+        Hall effect sensor:         SPI:UCB1
+    Radio:
+        CC1120 915MHz transceiver:  SPI:UCB3
+    Display:
+        Telemetry readout left:     UART:UCA1
+        Telemetry readout right:    UART:UCA2
+    Debug:
+        Logging                     UART:UCA3
+        EEPROM log                  SPI:UCB2
